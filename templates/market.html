@@ -1,91 +1,58 @@
 {% extends 'base.html' %}
 
-{% block title %}Market · Prediction Market{% endblock %}
+{% block title %}Markets · Prediction Market{% endblock %}
 
 {% block content %}
 
-<a class="back" href="{{ url_for('markets') }}">← Markets</a>
+<header class="index-header">
+  <p class="eyebrow">MARKETS</p>
+  <h1>Trade predictions.</h1>
+</header>
 
-<article class="market">
+{% if cards %}
 
-  <div class="meta">
-    <span>{{ market.category }}</span>
-    <span>{{ market.status }}</span>
+  <div class="grid">
+
+    {% for card in cards %}
+
+      <a
+        class="card"
+        href="{{ url_for('market', market_id=card.market.id) }}"
+      >
+
+        <div class="meta">
+          <span>{{ card.market.category }}</span>
+          <span>{{ card.market.status }}</span>
+        </div>
+
+        <h2>{{ card.market.question }}</h2>
+
+        <div class="prices">
+
+          <div>
+            <b>{{ pct(card.probability) }}</b>
+            <small>YES</small>
+          </div>
+
+          <div>
+            <b>{{ pct(1 - card.probability) }}</b>
+            <small>NO</small>
+          </div>
+
+        </div>
+
+      </a>
+
+    {% endfor %}
+
   </div>
 
-  <h1>{{ market.question }}</h1>
+{% else %}
 
-  {% if market.description %}
-    <p>{{ market.description }}</p>
-  {% endif %}
+  <div class="locked">
+    No markets yet.
+  </div>
 
-  <section class="comparison">
-    <div>
-      <small>YES</small>
-      <strong>{{ pct(probability) }}</strong>
-    </div>
-
-    <div>
-      <small>NO</small>
-      <strong>{{ pct(1 - probability) }}</strong>
-    </div>
-  </section>
-
-  {% if market.status == 'open' %}
-
-    <form
-      class="panel trade"
-      method="post"
-      action="{{ url_for('trade', market_id=market.id) }}"
-    >
-
-      <label>
-        Shares
-        <input
-          type="number"
-          name="shares"
-          min="0.1"
-          max="100"
-          step="0.1"
-          value="1"
-          required
-        >
-      </label>
-
-      <button name="side" value="YES" class="yes">
-        Buy YES
-      </button>
-
-      <button name="side" value="NO" class="no">
-        Buy NO
-      </button>
-
-    </form>
-
-  {% else %}
-
-    <div class="resolved">
-      Resolved {{ 'YES' if market.outcome else 'NO' }}
-    </div>
-
-  {% endif %}
-
-  {% if position %}
-
-    <section>
-      <h2>Your position</h2>
-
-      <div class="positions">
-        {% for p in position %}
-          <span>
-            {{ p.side }} · {{ '%.1f'|format(p.shares) }} shares
-          </span>
-        {% endfor %}
-      </div>
-    </section>
-
-  {% endif %}
-
-</article>
+{% endif %}
 
 {% endblock %}
