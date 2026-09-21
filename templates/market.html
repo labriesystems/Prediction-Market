@@ -33,8 +33,8 @@
 
   </section>
 
-  {% if market.status == 'open' %}
-
+  {% if trading_open %}
+  
     <form
       class="panel trade"
       method="post"
@@ -78,13 +78,19 @@
 
     </form>
 
-  {% else %}
+{% elif market.status == 'resolved' %}
 
-    <div class="resolved">
-      Resolved {{ 'YES' if market.outcome else 'NO' }}
-    </div>
+  <div class="resolved">
+    Resolved {{ 'YES' if market.outcome else 'NO' }}
+  </div>
 
-  {% endif %}
+{% else %}
+
+  <div class="locked">
+    Trading closed · awaiting resolution
+  </div>
+
+{% endif %}
 
   {% if position %}
 
