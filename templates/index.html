@@ -6,33 +6,55 @@
 
 <header class="index-header">
   <p class="eyebrow">FORECASTS</p>
-  <h1>Make your prediction.</h1>
+  <h1>Your predictions.</h1>
+
+  <a class="button" href="{{ url_for('new_forecast') }}">
+    + New prediction
+  </a>
 </header>
 
-<div class="grid">
-  {% for card in cards %}
-    <a class="card" href="{{ url_for('forecast_page', market_id=card.market.id) }}">
+{% if forecasts %}
 
-      <div class="meta">
-        <span>{{ card.market.category }}</span>
-        <span>{{ card.market.status }}</span>
-      </div>
+  <div class="grid">
 
-      <h2>{{ card.market.question }}</h2>
+    {% for forecast in forecasts %}
 
-      {% if card.forecast %}
-        <div class="prices">
-          <div>
-            <b>{{ pct(card.forecast.probability) }}</b>
-            <small>Your prediction</small>
-          </div>
+      <a
+        class="card"
+        href="{{ url_for('forecast_page', forecast_id=forecast.id) }}"
+      >
+
+        <div class="meta">
+          <span>{{ forecast.category }}</span>
+          <span>{{ forecast.status }}</span>
         </div>
-      {% else %}
-        <div class="locked">Not predicted yet</div>
-      {% endif %}
 
-    </a>
-  {% endfor %}
-</div>
+        <h2>{{ forecast.question }}</h2>
+
+        <div class="forecast-summary">
+          <strong>{{ pct(forecast.probability) }}</strong>
+          <small>YES</small>
+        </div>
+
+        {% if forecast.status == 'resolved' %}
+          <div class="resolved">
+            Outcome:
+            {{ 'YES' if forecast.outcome else 'NO' }}
+          </div>
+        {% endif %}
+
+      </a>
+
+    {% endfor %}
+
+  </div>
+
+{% else %}
+
+  <div class="locked">
+    You haven't made any predictions yet.
+  </div>
+
+{% endif %}
 
 {% endblock %}
