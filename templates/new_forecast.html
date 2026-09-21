@@ -11,9 +11,15 @@
   <p class="eyebrow">NEW PREDICTION</p>
   <h1>Make a prediction.</h1>
 
-  <form class="panel" method="post">
+ <form class="panel" method="post">
 
-    <label>
+  <input
+    type="hidden"
+    name="_csrf_token"
+    value="{{ csrf_token() }}"
+  >
+
+  <label>
       Question
       <input
         name="question"
