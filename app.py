@@ -10,9 +10,7 @@ from flask import Flask, abort, flash, g, redirect, render_template, request, se
 app = Flask(__name__)
 app.config.update(
     SECRET_KEY=os.getenv("SECRET_KEY", "dev-change-me"),
-    DATABASE=os.getenv("DATABASE", os.path.join(app.root_path, "belief_market.db")),
-)
-
+DATABASE=os.getenv("DATABASE", os.path.join(app.root_path, "prediction_market.db")),
 
 def db():
     if "db" not in g:
@@ -32,7 +30,17 @@ def close_db(_error=None):
 def init_db():
     with app.open_resource("schema.sql") as schema:
         db().executescript(schema.read().decode("utf8"))
+    db().commit()
 
+
+def ensure_db():
+    connection = db()
+    table = connection.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='users'"
+    ).fetchone()
+
+    if table is None:
+        init_db()
 
 @app.cli.command("init-db")
 def init_db_command():
@@ -55,10 +63,8 @@ def seed_command():
 
 @app.before_request
 def load_user():
+    ensure_db()
     g.user = None
-    if session.get("user_id"):
-        g.user = db().execute("SELECT * FROM users WHERE id=?", (session["user_id"],)).fetchone()
-
 
 def login_required(view):
     @wraps(view)
