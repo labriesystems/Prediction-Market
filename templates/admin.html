@@ -6,7 +6,7 @@
 
 <header class="index-header">
   <p class="eyebrow">ADMIN</p>
-  <h1>Resolve markets.</h1>
+  <h1>Manage markets.</h1>
 </header>
 
 {% if not session.admin %}
@@ -25,6 +25,66 @@
   </form>
 
 {% else %}
+
+  <section class="panel">
+
+    <h2>Create market</h2>
+
+    <form
+      method="post"
+      action="{{ url_for('create_market') }}"
+    >
+
+      <label>
+        Question
+        <input
+          name="question"
+          required
+          placeholder="Will this happen?"
+        >
+      </label>
+
+      <label>
+        Description
+        <textarea
+          name="description"
+          placeholder="Optional details"
+        ></textarea>
+      </label>
+
+      <label>
+        Category
+        <input
+          name="category"
+          placeholder="General"
+        >
+      </label>
+
+      <label>
+        Closing date
+        <input
+          type="datetime-local"
+          name="closes_at"
+          required
+        >
+      </label>
+
+      <label>
+        Resolution source
+        <input
+          name="resolution_source"
+          placeholder="Optional"
+        >
+      </label>
+
+      <button>Create market</button>
+
+    </form>
+
+  </section>
+
+
+  <h2 class="admin-heading">Open markets</h2>
 
   {% if markets %}
 
@@ -46,13 +106,23 @@
             method="post"
             action="{{ url_for('resolve_market', market_id=market.id) }}"
           >
-            <button name="outcome" value="1" class="yes">
+
+            <button
+              name="outcome"
+              value="1"
+              class="yes"
+            >
               Resolve YES
             </button>
 
-            <button name="outcome" value="0" class="no">
+            <button
+              name="outcome"
+              value="0"
+              class="no"
+            >
               Resolve NO
             </button>
+
           </form>
 
         </section>
