@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Forecast · Prediction Market{% endblock %}
+{% block title %}Prediction · Prediction Market{% endblock %}
 
 {% block content %}
 
@@ -9,68 +9,72 @@
 <article class="market">
 
   <div class="meta">
-    <span>{{ market.category }}</span>
-    <span>{{ market.closes_at[:10] }}</span>
+    <span>{{ forecast.category }}</span>
+    <span>{{ forecast.status }}</span>
   </div>
 
-  <h1>{{ market.question }}</h1>
+  <h1>{{ forecast.question }}</h1>
 
-  {% if market.description %}
-    <p>{{ market.description }}</p>
-  {% endif %}
+  <section class="panel">
 
-  {% if forecast %}
+    <small>Your prediction</small>
+
+    <strong class="forecast-value">
+      {{ pct(forecast.probability) }}
+    </strong>
+
+    <small>YES</small>
+
+    {% if forecast.resolves_at %}
+      <p>
+        Resolution date: {{ forecast.resolves_at }}
+      </p>
+    {% endif %}
+
+    {% if forecast.notes %}
+      <p>{{ forecast.notes }}</p>
+    {% endif %}
+
+  </section>
+
+
+  {% if forecast.status == 'open' %}
 
     <section class="panel">
-      <small>Your prediction</small>
-      <strong class="forecast-value">
-        {{ pct(forecast.probability) }}
-      </strong>
 
-      {% if forecast.rationale %}
-        <p>{{ forecast.rationale }}</p>
-      {% endif %}
+      <h2>Resolve prediction</h2>
+
+      <p>What actually happened?</p>
+
+      <form
+        class="resolve-buttons"
+        method="post"
+        action="{{ url_for('resolve_forecast', forecast_id=forecast.id) }}"
+      >
+
+        <button name="outcome" value="1" class="yes">
+          YES
+        </button>
+
+        <button name="outcome" value="0" class="no">
+          NO
+        </button>
+
+      </form>
+
     </section>
-
-  {% elif market.status == 'open' %}
-
-    <form
-      class="panel"
-      method="post"
-      action="{{ url_for('forecast', market_id=market.id) }}"
-    >
-
-      <label>
-        Probability of YES
-        <div class="prob">
-          <input
-            type="number"
-            name="probability"
-            min="1"
-            max="99"
-            value="50"
-            required
-          >
-          <span>%</span>
-        </div>
-      </label>
-
-      <label>
-        Notes
-        <textarea
-          name="rationale"
-          maxlength="500"
-          placeholder="Optional"
-        ></textarea>
-      </label>
-
-      <button>Save prediction</button>
-
-    </form>
 
   {% else %}
 
-    <div class="locked">This question is closed.</div>
+    <section class="resolved">
+
+      <small>Outcome</small>
+
+      <strong>
+        {{ 'YES' if forecast.outcome else 'NO' }}
+      </strong>
+
+    </section>
 
   {% endif %}
 
