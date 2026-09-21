@@ -10,7 +10,7 @@ from app import app, db, init_db
 def client():
     handle, path = tempfile.mkstemp()
 
-      app.config.update(
+    app.config.update(
         TESTING=True,
         DATABASE=path,
         SECRET_KEY="test",
@@ -19,7 +19,6 @@ def client():
 
     with app.app_context():
         init_db()
-
         db().execute(
             """
             INSERT INTO markets
