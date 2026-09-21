@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Prediction Market{% endblock %}
+{% block title %}Log In · Prediction Market{% endblock %}
 
 {% block content %}
 
@@ -19,17 +19,30 @@
       <input
         name="username"
         maxlength="24"
-        autofocus
+        autocomplete="username"
         required
-        placeholder="username"
+        autofocus
       >
     </label>
 
-    <button>Start</button>
+    <label>
+      Password
+      <input
+        type="password"
+        name="password"
+        autocomplete="current-password"
+        required
+      >
+    </label>
+
+    <button>Log in</button>
 
   </form>
 
-  <small>No password required.</small>
+  <p class="auth-switch">
+    New here?
+    <a href="{{ url_for('register') }}">Create an account</a>
+  </p>
 
   <footer class="start-footer">
     <span>LaBrie Systems</span>
