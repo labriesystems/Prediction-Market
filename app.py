@@ -1,5 +1,6 @@
 import math
 import os
+import secrets
 import sqlite3
 from functools import wraps
 
@@ -22,12 +23,38 @@ app = Flask(__name__)
 
 app.config.update(
     SECRET_KEY=os.getenv("SECRET_KEY", "dev-change-me"),
+    CSRF_ENABLED=True,
     DATABASE=os.getenv(
         "DATABASE",
         os.path.join(app.root_path, "prediction_market.db"),
     ),
 )
 
+def csrf_token():
+    if "_csrf_token" not in session:
+        session["_csrf_token"] = secrets.token_urlsafe(32)
+
+    return session["_csrf_token"]
+
+
+app.jinja_env.globals["csrf_token"] = csrf_token
+
+
+@app.before_request
+def csrf_protect():
+    if not app.config["CSRF_ENABLED"]:
+        return
+
+    if request.method in ("POST", "PUT", "PATCH", "DELETE"):
+        expected = session.get("_csrf_token")
+        submitted = request.form.get("_csrf_token")
+
+        if (
+            not expected
+            or not submitted
+            or not secrets.compare_digest(expected, submitted)
+        ):
+            abort(400)
 
 # DATABASE
 
