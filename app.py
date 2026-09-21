@@ -299,14 +299,16 @@ def lmsr_cost(q_yes, q_no, liquidity):
 
 
 def market_probability(market):
-    yes = math.exp(
-        market["q_yes"] / market["liquidity"]
-    )
-    no = math.exp(
-        market["q_no"] / market["liquidity"]
-    )
+    difference = (
+        market["q_no"] - market["q_yes"]
+    ) / market["liquidity"]
 
-    return yes / (yes + no)
+    if difference >= 0:
+        exp_value = math.exp(-difference)
+        return exp_value / (1 + exp_value)
+
+    exp_value = math.exp(difference)
+    return 1 / (1 + exp_value)
 
 
 def quote_trade(market, side, shares):
@@ -572,7 +574,7 @@ def profile():
     )
 
 
-# ADMIN — MARKET RESOLUTION
+# ADMIN — MARKET MANAGEMENT
 
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
@@ -601,6 +603,52 @@ def admin():
         "admin.html",
         markets=market_rows,
     )
+
+
+@app.post("/admin/market/new")
+def create_market():
+    if not session.get("admin"):
+        abort(403)
+
+    question = request.form.get("question", "").strip()
+    description = request.form.get("description", "").strip()
+    category = request.form.get("category", "").strip() or "General"
+    closes_at = request.form.get("closes_at", "").strip()
+    resolution_source = request.form.get("resolution_source", "").strip()
+
+    if not question or not closes_at:
+        flash(
+            "Question and closing date are required.",
+            "error",
+        )
+        return redirect(url_for("admin"))
+
+    db().execute(
+        """
+        INSERT INTO markets
+        (
+            question,
+            description,
+            category,
+            closes_at,
+            resolution_source
+        )
+        VALUES(?,?,?,?,?)
+        """,
+        (
+            question,
+            description,
+            category,
+            closes_at,
+            resolution_source,
+        ),
+    )
+
+    db().commit()
+
+    flash("Market created.", "success")
+
+    return redirect(url_for("admin"))
 
 
 @app.post("/admin/resolve/<int:market_id>")
@@ -681,9 +729,7 @@ def resolve_market(market_id):
         "success",
     )
 
-    return redirect(
-        url_for("admin")
-    )
+    return redirect(url_for("admin"))
 
 
 # TEMPLATE HELPERS
