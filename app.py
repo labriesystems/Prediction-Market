@@ -479,12 +479,13 @@ def market(market_id):
     ).fetchall()
 
     return render_template(
-    "market.html",
-    market=market_row,
-    probability=market_probability(market_row),
-    position=positions,
-    trading_open=market_trading_open(market_row),
-)
+        "market.html",
+        market=market_row,
+        probability=market_probability(market_row),
+        position=positions,
+        trading_open=market_trading_open(market_row),
+    )
+
 
 @app.post("/market/<int:market_id>/trade")
 @login_required
@@ -501,18 +502,19 @@ def trade(market_id):
     ).fetchone()
 
     if not market_row:
-    abort(404)
+        abort(404)
 
-if not market_trading_open(market_row):
-    flash("Trading for this market has closed.", "error")
-    return redirect(
-        url_for(
-            "market",
-            market_id=market_id,
+    if not market_trading_open(market_row):
+        flash("Trading for this market has closed.", "error")
+        return redirect(
+            url_for(
+                "market",
+                market_id=market_id,
+            )
         )
-    )
 
-side = request.form.get("side")
+    side = request.form.get("side")
+
     try:
         shares = float(
             request.form.get("shares", 0)
@@ -619,7 +621,6 @@ side = request.form.get("side")
             market_id=market_id,
         )
     )
-
 
 # RESULTS
 
