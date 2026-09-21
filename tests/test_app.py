@@ -10,12 +10,12 @@ from app import app, db, init_db
 def client():
     handle, path = tempfile.mkstemp()
 
-   app.config.update(
-    TESTING=True,
-    DATABASE=path,
-    SECRET_KEY="test",
-    CSRF_ENABLED=False,
-)
+      app.config.update(
+        TESTING=True,
+        DATABASE=path,
+        SECRET_KEY="test",
+        CSRF_ENABLED=False,
+    )
 
     with app.app_context():
         init_db()
