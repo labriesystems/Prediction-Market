@@ -49,23 +49,47 @@ def client():
     os.unlink(path)
 
 
-def login(client):
+def register(client):
     return client.post(
-        "/login",
-        data={"username": "tester"},
+        "/register",
+        data={
+            "username": "tester",
+            "password": "testpassword123",
+        },
         follow_redirects=True,
     )
 
 
+def test_register(client):
+    response = register(client)
+
+    assert response.status_code == 200
+    assert b"Your predictions." in response.data
+
+
 def test_login(client):
-    response = login(client)
+    register(client)
+
+    client.post(
+        "/logout",
+        follow_redirects=True,
+    )
+
+    response = client.post(
+        "/login",
+        data={
+            "username": "tester",
+            "password": "testpassword123",
+        },
+        follow_redirects=True,
+    )
 
     assert response.status_code == 200
     assert b"Your predictions." in response.data
 
 
 def test_create_forecast(client):
-    login(client)
+    register(client)
 
     response = client.post(
         "/forecast/new",
@@ -86,7 +110,7 @@ def test_create_forecast(client):
 
 
 def test_resolve_forecast(client):
-    login(client)
+    register(client)
 
     client.post(
         "/forecast/new",
@@ -109,7 +133,7 @@ def test_resolve_forecast(client):
 
 
 def test_market_available_without_forecast(client):
-    login(client)
+    register(client)
 
     response = client.get("/market/1")
 
@@ -120,7 +144,7 @@ def test_market_available_without_forecast(client):
 
 
 def test_trade_without_forecast(client):
-    login(client)
+    register(client)
 
     response = client.post(
         "/market/1/trade",
@@ -133,12 +157,11 @@ def test_trade_without_forecast(client):
 
     assert response.status_code == 200
     assert b"Bought 2 YES shares" in response.data
-    assert b"YES" in response.data
     assert b"2.0 shares" in response.data
 
 
 def test_results_after_resolution(client):
-    login(client)
+    register(client)
 
     client.post(
         "/forecast/new",
