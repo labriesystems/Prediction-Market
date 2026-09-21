@@ -4,9 +4,18 @@ services:
     runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
+
     envVars:
       - key: SECRET_KEY
         generateValue: true
+
       - key: ADMIN_KEY
         generateValue: true
 
+      - key: DATABASE
+        value: /var/data/prediction_market.db
+
+    disk:
+      name: prediction-market-data
+      mountPath: /var/data
+      sizeGB: 1
