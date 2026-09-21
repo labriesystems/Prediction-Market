@@ -12,6 +12,13 @@
 {% if not session.admin %}
 
   <form method="post" class="panel">
+
+    <input
+      type="hidden"
+      name="_csrf_token"
+      value="{{ csrf_token() }}"
+    >
+
     <label>
       Admin key
       <input
@@ -21,12 +28,9 @@
       >
     </label>
 
-    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-    
     <button>Unlock</button>
-  </form>
 
-<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+  </form>
 
 {% else %}
 
@@ -38,7 +42,13 @@
       method="post"
       action="{{ url_for('create_market') }}"
     >
-<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
+      <input
+        type="hidden"
+        name="_csrf_token"
+        value="{{ csrf_token() }}"
+      >
+
       <label>
         Question
         <input
@@ -87,7 +97,6 @@
 
   </section>
 
-
   <h2 class="admin-heading">Open markets</h2>
 
   {% if markets %}
@@ -110,6 +119,12 @@
             method="post"
             action="{{ url_for('resolve_market', market_id=market.id) }}"
           >
+
+            <input
+              type="hidden"
+              name="_csrf_token"
+              value="{{ csrf_token() }}"
+            >
 
             <button
               name="outcome"
