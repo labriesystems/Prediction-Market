@@ -132,6 +132,22 @@ def index():
         cards.append({"market": market, "forecast": forecast, "probability": market_probability(market) if forecast else None})
     return render_template("index.html", cards=cards)
 
+@app.route("/markets")
+@login_required
+def markets():
+    market_rows = db().execute(
+        "SELECT * FROM markets ORDER BY status, closes_at"
+    ).fetchall()
+
+    cards = []
+
+    for market_row in market_rows:
+        cards.append({
+            "market": market_row,
+            "probability": market_probability(market_row),
+        })
+
+    return render_template("markets.html", cards=cards)
 
 @app.route("/market/<int:market_id>")
 @login_required
@@ -175,9 +191,8 @@ def forecast(market_id):
 def trade(market_id):
     connection = db()
     market_row = connection.execute("SELECT * FROM markets WHERE id=? AND status='open'", (market_id,)).fetchone()
-    forecast_row = connection.execute("SELECT 1 FROM forecasts WHERE user_id=? AND market_id=?", (g.user["id"], market_id)).fetchone()
-    if not market_row or not forecast_row:
-        abort(403)
+   if not market_row:
+    abort(404)
     side = request.form.get("side")
     try:
         shares = float(request.form.get("shares", 0))
