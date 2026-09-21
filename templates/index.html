@@ -1,2 +1,38 @@
-{% extends 'base.html' %}{% block content %}<header class="index-header"><p class="eyebrow">QUESTIONS</p><h1>Make your prediction.</h1></header><div class="grid">{% for card in cards %}<a class="card" href="{{ url_for('market',market_id=card.market.id) }}"><div class="meta"><span>{{ card.market.category }}</span><span>{{ card.market.status }}</span></div><h2>{{ card.market.question }}</h2>{% if card.forecast %}<div class="prices"><div><b>{{ pct(card.forecast.probability) }}</b><small>Your belief</small></div><div><b>{{ pct(card.probability) }}</b><small>Market</small></div></div>{% else %}<div class="locked">Market hidden · forecast to unlock</div>{% endif %}</a>{% endfor %}</div>{% endblock %}
+{% extends 'base.html' %}
 
+{% block title %}Forecasts · Prediction Market{% endblock %}
+
+{% block content %}
+
+<header class="index-header">
+  <p class="eyebrow">FORECASTS</p>
+  <h1>Make your prediction.</h1>
+</header>
+
+<div class="grid">
+  {% for card in cards %}
+    <a class="card" href="{{ url_for('forecast_page', market_id=card.market.id) }}">
+
+      <div class="meta">
+        <span>{{ card.market.category }}</span>
+        <span>{{ card.market.status }}</span>
+      </div>
+
+      <h2>{{ card.market.question }}</h2>
+
+      {% if card.forecast %}
+        <div class="prices">
+          <div>
+            <b>{{ pct(card.forecast.probability) }}</b>
+            <small>Your prediction</small>
+          </div>
+        </div>
+      {% else %}
+        <div class="locked">Not predicted yet</div>
+      {% endif %}
+
+    </a>
+  {% endfor %}
+</div>
+
+{% endblock %}
