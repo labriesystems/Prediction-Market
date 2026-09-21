@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Forecast · Prediction Market{% endblock %}
+
+{% block content %}
+
+<a class="back" href="{{ url_for('index') }}">← Forecasts</a>
+
+<article class="market">
+
+  <div class="meta">
+    <span>{{ market.category }}</span>
+    <span>{{ market.closes_at[:10] }}</span>
+  </div>
+
+  <h1>{{ market.question }}</h1>
+
+  {% if market.description %}
+    <p>{{ market.description }}</p>
+  {% endif %}
+
+  {% if forecast %}
+
+    <section class="panel">
+      <small>Your prediction</small>
+      <strong class="forecast-value">
+        {{ pct(forecast.probability) }}
+      </strong>
+
+      {% if forecast.rationale %}
+        <p>{{ forecast.rationale }}</p>
+      {% endif %}
+    </section>
+
+  {% elif market.status == 'open' %}
+
+    <form
+      class="panel"
+      method="post"
+      action="{{ url_for('forecast', market_id=market.id) }}"
+    >
+
+      <label>
+        Probability of YES
+        <div class="prob">
+          <input
+            type="number"
+            name="probability"
+            min="1"
+            max="99"
+            value="50"
+            required
+          >
+          <span>%</span>
+        </div>
+      </label>
+
+      <label>
+        Notes
+        <textarea
+          name="rationale"
+          maxlength="500"
+          placeholder="Optional"
+        ></textarea>
+      </label>
+
+      <button>Save prediction</button>
+
+    </form>
+
+  {% else %}
+
+    <div class="locked">This question is closed.</div>
+
+  {% endif %}
+
+</article>
+
+{% endblock %}
