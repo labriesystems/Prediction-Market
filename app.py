@@ -1,16 +1,22 @@
 import math
 import os
 import sqlite3
-from datetime import datetime, timezone
 from functools import wraps
 
 import click
 from flask import Flask, abort, flash, g, redirect, render_template, request, session, url_for
 
+
 app = Flask(__name__)
+
 app.config.update(
     SECRET_KEY=os.getenv("SECRET_KEY", "dev-change-me"),
-DATABASE=os.getenv("DATABASE", os.path.join(app.root_path, "prediction_market.db")),
+    DATABASE=os.getenv(
+        "DATABASE",
+        os.path.join(app.root_path, "prediction_market.db"),
+    ),
+)
+
 
 def db():
     if "db" not in g:
