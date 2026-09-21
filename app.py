@@ -3,7 +3,7 @@ import os
 import sqlite3
 from functools import wraps
 
-import click
+import click from werkzeug.security import check_password_hash, generate_password_hash
 from flask import (
     Flask,
     abort,
@@ -98,25 +98,24 @@ def login_required(view):
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    if g.user is not None:
+        return redirect(url_for("index"))
+
     if request.method == "POST":
         username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
 
-        if not 2 <= len(username) <= 24 or not username.replace("_", "").isalnum():
-            flash("Use 2–24 letters, numbers, or underscores.", "error")
-            return render_template("login.html")
-
-        connection = db()
-
-        connection.execute(
-            "INSERT OR IGNORE INTO users(username) VALUES(?)",
-            (username,),
-        )
-        connection.commit()
-
-        user = connection.execute(
+        user = db().execute(
             "SELECT * FROM users WHERE username=? COLLATE NOCASE",
             (username,),
         ).fetchone()
+
+        if user is None or not check_password_hash(
+            user["password_hash"],
+            password,
+        ):
+            flash("Incorrect username or password.", "error")
+            return render_template("login.html")
 
         session.clear()
         session["user_id"] = user["id"]
@@ -124,6 +123,59 @@ def login():
         return redirect(url_for("index"))
 
     return render_template("login.html")
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if g.user is not None:
+        return redirect(url_for("index"))
+
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+
+        if not 2 <= len(username) <= 24 or not username.replace("_", "").isalnum():
+            flash("Use 2–24 letters, numbers, or underscores.", "error")
+            return render_template("register.html")
+
+        if len(password) < 8:
+            flash("Password must be at least 8 characters.", "error")
+            return render_template("register.html")
+
+        connection = db()
+
+        existing = connection.execute(
+            "SELECT id FROM users WHERE username=? COLLATE NOCASE",
+            (username,),
+        ).fetchone()
+
+        if existing:
+            flash("That username is already taken.", "error")
+            return render_template("register.html")
+
+        cursor = connection.execute(
+            """
+            INSERT INTO users
+            (
+                username,
+                password_hash
+            )
+            VALUES(?,?)
+            """,
+            (
+                username,
+                generate_password_hash(password),
+            ),
+        )
+
+        connection.commit()
+
+        session.clear()
+        session["user_id"] = cursor.lastrowid
+
+        return redirect(url_for("index"))
+
+    return render_template("register.html")
 
 
 @app.post("/logout")
