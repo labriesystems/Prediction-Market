@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Account · Prediction Market{% endblock %}
+
+{% block content %}
+
+<section class="hero">
+
+  <p class="eyebrow">PREDICTION MARKET</p>
+  <h1>Create an account.</h1>
+
+  <form method="post" class="login">
+
+    <label>
+      Username
+      <input
+        name="username"
+        maxlength="24"
+        autocomplete="username"
+        required
+        autofocus
+      >
+    </label>
+
+    <label>
+      Password
+      <input
+        type="password"
+        name="password"
+        minlength="8"
+        autocomplete="new-password"
+        required
+      >
+    </label>
+
+    <button>Create account</button>
+
+  </form>
+
+  <p class="auth-switch">
+    Already have an account?
+    <a href="{{ url_for('login') }}">Log in</a>
+  </p>
+
+  <footer class="start-footer">
+    <span>LaBrie Systems</span>
+    <span>labriesystems@gmail.com</span>
+  </footer>
+
+</section>
+
+{% endblock %}
