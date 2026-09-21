@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>{% block title %}Belief Market{% endblock %}</title>
+  <title>{% block title %}Prediction Market{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-  <nav><a class="brand" href="{{ url_for('index') }}">BELIEF/MARKET</a>{% if g.user %}<div><a href="{{ url_for('profile') }}">My edge</a><span class="credits">{{ '%.0f'|format(g.user.balance) }} credits</span><form action="{{ url_for('logout') }}" method="post"><button class="link">Log out</button></form></div>{% endif %}</nav>
+  <nav><a class="brand" href="{{ url_for('index') }}">PREDICTION MARKET</a>{% if g.user %}<div><a href="{{ url_for('profile') }}">My edge</a><span class="credits">{{ '%.0f'|format(g.user.balance) }} credits</span><form action="{{ url_for('logout') }}" method="post"><button class="link">Log out</button></form></div>{% endif %}</nav>
   <main>
     {% for category,message in get_flashed_messages(with_categories=true) %}<div class="flash {{ category }}">{{ message }}</div>{% endfor %}
     {% block content %}{% endblock %}
