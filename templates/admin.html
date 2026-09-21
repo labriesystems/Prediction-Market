@@ -21,8 +21,12 @@
       >
     </label>
 
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+    
     <button>Unlock</button>
   </form>
+
+<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 
 {% else %}
 
@@ -34,7 +38,7 @@
       method="post"
       action="{{ url_for('create_market') }}"
     >
-
+<input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
       <label>
         Question
         <input
