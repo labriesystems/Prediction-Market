@@ -1,2 +1,60 @@
-{% extends 'base.html' %}{% block title %}My edge · Belief Market{% endblock %}{% block content %}<header><p class="eyebrow">YOUR TRACK RECORD</p><h1>Separate belief quality from trading results.</h1></header><section class="comparison"><div><small>Resolved forecasts</small><strong>{{ resolved }}</strong></div><div><small>Brier score</small><strong>{{ '%.3f'|format(overall) if overall is not none else '—' }}</strong></div><div><small>Trading P&amp;L</small><strong>{{ '%+.1f'|format(pnl) }}</strong></div></section><h2>Forecasting by domain</h2>{% if categories %}<div class="grid">{% for name,data in categories.items() %}<div class="card"><div class="meta"><span>{{ name }}</span><span>{{ data.count }} resolved</span></div><h2>{{ '%.3f'|format(data.brier) }}</h2><small>Brier score · lower is better</small></div>{% endfor %}</div>{% else %}<div class="locked">Your profile becomes meaningful after questions resolve.</div>{% endif %}{% endblock %}
+{% extends 'base.html' %}
 
+{% block title %}Results · Prediction Market{% endblock %}
+
+{% block content %}
+
+<header class="index-header">
+  <p class="eyebrow">RESULTS</p>
+  <h1>Your forecasting results.</h1>
+</header>
+
+<section class="comparison">
+
+  <div>
+    <small>Resolved predictions</small>
+    <strong>{{ resolved }}</strong>
+  </div>
+
+  <div>
+    <small>Brier score</small>
+    <strong>
+      {{ '%.3f'|format(overall) if overall is not none else '—' }}
+    </strong>
+  </div>
+
+</section>
+
+{% if categories %}
+
+  <h2>By category</h2>
+
+  <div class="grid">
+
+    {% for name, data in categories.items() %}
+
+      <div class="card">
+
+        <div class="meta">
+          <span>{{ name }}</span>
+          <span>{{ data.count }} predictions</span>
+        </div>
+
+        <h2>{{ '%.3f'|format(data.brier) }}</h2>
+        <small>Brier score</small>
+
+      </div>
+
+    {% endfor %}
+
+  </div>
+
+{% else %}
+
+  <div class="locked">
+    Results appear after your predictions resolve.
+  </div>
+
+{% endif %}
+
+{% endblock %}
