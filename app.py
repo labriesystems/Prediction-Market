@@ -2,6 +2,7 @@ import math
 import os
 import secrets
 import sqlite3
+from datetime import datetime, timezone
 from functools import wraps
 
 import click
@@ -366,6 +367,20 @@ def resolve_forecast(forecast_id):
 
 # MARKETS
 
+def market_trading_open(market):
+    if market["status"] != "open":
+        return False
+
+    try:
+        closes_at = datetime.fromisoformat(market["closes_at"])
+    except (TypeError, ValueError):
+        return False
+
+    if closes_at.tzinfo is None:
+        closes_at = closes_at.replace(tzinfo=timezone.utc)
+
+    return datetime.now(timezone.utc) < closes_at
+
 def lmsr_cost(q_yes, q_no, liquidity):
     high = max(q_yes, q_no) / liquidity
 
@@ -464,12 +479,12 @@ def market(market_id):
     ).fetchall()
 
     return render_template(
-        "market.html",
-        market=market_row,
-        probability=market_probability(market_row),
-        position=positions,
-    )
-
+    "market.html",
+    market=market_row,
+    probability=market_probability(market_row),
+    position=positions,
+    trading_open=market_trading_open(market_row),
+)
 
 @app.post("/market/<int:market_id>/trade")
 @login_required
@@ -486,10 +501,18 @@ def trade(market_id):
     ).fetchone()
 
     if not market_row:
-        abort(404)
+    abort(404)
 
-    side = request.form.get("side")
+if not market_trading_open(market_row):
+    flash("Trading for this market has closed.", "error")
+    return redirect(
+        url_for(
+            "market",
+            market_id=market_id,
+        )
+    )
 
+side = request.form.get("side")
     try:
         shares = float(
             request.form.get("shares", 0)
