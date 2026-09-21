@@ -3,4 +3,52 @@
 .index-header h1{
   font-size:clamp(2rem,4vw,2.5rem);
   letter-spacing:-.035em;
+} .index-header h1 {
+  font-size: clamp(2rem, 4vw, 2.5rem);
+  letter-spacing: -.035em;
+}
+
+.index-header .button {
+  display: inline-block;
+  margin-top: 10px;
+}
+
+.button {
+  background: var(--acid);
+  color: #090a0c;
+  border-radius: 8px;
+  padding: 11px 16px;
+  font-weight: 700;
+}
+
+.forecast-summary {
+  margin-top: 24px;
+}
+
+.forecast-summary strong,
+.forecast-value {
+  display: block;
+  font: 700 2.5rem system-ui, sans-serif;
+}
+
+.resolve-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.resolve-buttons button {
+  min-width: 100px;
+}
+
+.resolved strong {
+  display: block;
+  margin-top: 4px;
+  font: 700 2rem system-ui, sans-serif;
+}
+
+@media (max-width: 650px) {
+  .resolve-buttons {
+    flex-direction: column;
+  }
 }
