@@ -1,19 +1,41 @@
 {% extends 'base.html' %}
+
 {% block title %}Prediction Market{% endblock %}
 
 {% block content %}
+
 <section class="hero">
+
   <h1>Track your predictions over time.</h1>
-  <p>Make probability estimates, measure your accuracy, and use play credits to test your predictions.</p>
+
+  <p>
+    Make probability estimates and measure your accuracy over time.
+  </p>
 
   <form method="post" class="login">
+
     <label>
       Username
-      <input name="username" maxlength="24" autofocus required placeholder="username">
+      <input
+        name="username"
+        maxlength="24"
+        autofocus
+        required
+        placeholder="username"
+      >
     </label>
+
     <button>Start</button>
+
   </form>
 
   <small>No password required.</small>
+
+  <footer class="start-footer">
+    <span>LaBrie Systems</span>
+    <span>labriesystems@gmail.com</span>
+  </footer>
+
 </section>
+
 {% endblock %}
