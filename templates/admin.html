@@ -1,2 +1,74 @@
-{% extends 'base.html' %}{% block content %}<header><p class="eyebrow">ADMIN</p><h1>Resolve questions</h1></header>{% if not session.admin %}<form method="post" class="panel"><label>Admin key<input type="password" name="key" required></label><button>Unlock</button></form>{% else %}{% for market in markets %}<section class="card"><h2>{{ market.question }}</h2><form method="post" action="{{ url_for('resolve',market_id=market.id) }}"><button name="outcome" value="1" class="yes">Resolve YES</button><button name="outcome" value="0" class="no">Resolve NO</button></form></section>{% endfor %}{% endif %}{% endblock %}
+{% extends 'base.html' %}
 
+{% block title %}Admin · Prediction Market{% endblock %}
+
+{% block content %}
+
+<header class="index-header">
+  <p class="eyebrow">ADMIN</p>
+  <h1>Resolve markets.</h1>
+</header>
+
+{% if not session.admin %}
+
+  <form method="post" class="panel">
+    <label>
+      Admin key
+      <input
+        type="password"
+        name="key"
+        required
+      >
+    </label>
+
+    <button>Unlock</button>
+  </form>
+
+{% else %}
+
+  {% if markets %}
+
+    <div class="grid">
+
+      {% for market in markets %}
+
+        <section class="card">
+
+          <div class="meta">
+            <span>{{ market.category }}</span>
+            <span>OPEN</span>
+          </div>
+
+          <h2>{{ market.question }}</h2>
+
+          <form
+            class="resolve-buttons"
+            method="post"
+            action="{{ url_for('resolve_market', market_id=market.id) }}"
+          >
+            <button name="outcome" value="1" class="yes">
+              Resolve YES
+            </button>
+
+            <button name="outcome" value="0" class="no">
+              Resolve NO
+            </button>
+          </form>
+
+        </section>
+
+      {% endfor %}
+
+    </div>
+
+  {% else %}
+
+    <div class="locked">
+      No open markets.
+    </div>
+
+  {% endif %}
+
+{% endif %}
+
+{% endblock %}
