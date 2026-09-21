@@ -52,3 +52,11 @@
     flex-direction: column;
   }
 }
+.start-footer {
+  margin-top: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  color: var(--muted);
+  font-size: .75rem;
+}
