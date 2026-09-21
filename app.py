@@ -3,8 +3,8 @@ import os
 import sqlite3
 from functools import wraps
 
-import click from 
-werkzeug.security import check_password_hash, generate_password_hash
+import click
+from werkzeug.security import check_password_hash, generate_password_hash
 from flask import (
     Flask,
     abort,
