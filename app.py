@@ -682,7 +682,7 @@ def profile():
 
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
-        if request.method == "POST" and "key" in request.form:
+    if request.method == "POST" and "key" in request.form:
         admin_key = os.getenv("ADMIN_KEY")
 
         session["admin"] = (
