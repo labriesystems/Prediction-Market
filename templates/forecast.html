@@ -51,7 +51,7 @@
         method="post"
         action="{{ url_for('resolve_forecast', forecast_id=forecast.id) }}"
       >
-
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
         <button name="outcome" value="1" class="yes">
           YES
         </button>
