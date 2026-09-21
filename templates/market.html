@@ -41,6 +41,12 @@
       action="{{ url_for('trade', market_id=market.id) }}"
     >
 
+      <input
+        type="hidden"
+        name="_csrf_token"
+        value="{{ csrf_token() }}"
+      >
+
       <label>
         Shares
         <input
@@ -54,17 +60,23 @@
         >
       </label>
 
-      <button name="side" value="YES" class="yes">
+      <button
+        name="side"
+        value="YES"
+        class="yes"
+      >
         Buy YES
       </button>
 
-      <button name="side" value="NO" class="no">
+      <button
+        name="side"
+        value="NO"
+        class="no"
+      >
         Buy NO
       </button>
 
     </form>
-
-  <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 
   {% else %}
 
@@ -77,17 +89,21 @@
   {% if position %}
 
     <section>
+
       <h2>Your position</h2>
 
       <div class="positions">
 
         {% for p in position %}
+
           <span>
             {{ p.side }} · {{ '%.1f'|format(p.shares) }} shares
           </span>
+
         {% endfor %}
 
       </div>
+
     </section>
 
   {% endif %}
