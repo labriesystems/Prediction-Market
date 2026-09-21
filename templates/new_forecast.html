@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}New Prediction · Prediction Market{% endblock %}
+
+{% block content %}
+
+<a class="back" href="{{ url_for('index') }}">← Forecasts</a>
+
+<article class="market">
+
+  <p class="eyebrow">NEW PREDICTION</p>
+  <h1>Make a prediction.</h1>
+
+  <form class="panel" method="post">
+
+    <label>
+      Question
+      <input
+        name="question"
+        required
+        placeholder="Will this happen?"
+      >
+    </label>
+
+    <label>
+      Probability of YES
+      <div class="prob">
+        <input
+          type="number"
+          name="probability"
+          min="1"
+          max="99"
+          value="50"
+          required
+        >
+        <span>%</span>
+      </div>
+    </label>
+
+    <label>
+      Category
+      <input
+        name="category"
+        placeholder="General"
+      >
+    </label>
+
+    <label>
+      Resolution date
+      <input
+        type="date"
+        name="resolves_at"
+      >
+    </label>
+
+    <label>
+      Notes
+      <textarea
+        name="notes"
+        maxlength="1000"
+        placeholder="Optional"
+      ></textarea>
+    </label>
+
+    <button>Save prediction</button>
+
+  </form>
+
+</article>
+
+{% endblock %}
