@@ -137,92 +137,151 @@ def logout():
 @app.route("/")
 @login_required
 def index():
-    questions = db().execute(
-        "SELECT * FROM markets ORDER BY status, closes_at"
+    forecasts = db().execute(
+        """
+        SELECT *
+        FROM forecasts
+        WHERE user_id=?
+        ORDER BY
+            CASE WHEN status='open' THEN 0 ELSE 1 END,
+            created_at DESC
+        """,
+        (g.user["id"],),
     ).fetchall()
 
-    cards = []
-
-    for question in questions:
-        user_forecast = db().execute(
-            "SELECT * FROM forecasts "
-            "WHERE user_id=? AND market_id=?",
-            (g.user["id"], question["id"]),
-        ).fetchone()
-
-        cards.append({
-            "market": question,
-            "forecast": user_forecast,
-        })
-
-    return render_template("index.html", cards=cards)
-
-
-@app.route("/forecast/<int:market_id>")
-@login_required
-def forecast_page(market_id):
-    question = db().execute(
-        "SELECT * FROM markets WHERE id=?",
-        (market_id,),
-    ).fetchone()
-
-    if not question:
-        abort(404)
-
-    user_forecast = db().execute(
-        "SELECT * FROM forecasts "
-        "WHERE user_id=? AND market_id=?",
-        (g.user["id"], market_id),
-    ).fetchone()
-
     return render_template(
-        "forecast.html",
-        market=question,
-        forecast=user_forecast,
+        "index.html",
+        forecasts=forecasts,
     )
 
 
-@app.post("/forecast/<int:market_id>")
+@app.route("/forecast/new", methods=["GET", "POST"])
 @login_required
-def forecast(market_id):
-    question = db().execute(
-        "SELECT * FROM markets "
-        "WHERE id=? AND status='open'",
-        (market_id,),
-    ).fetchone()
+def new_forecast():
+    if request.method == "POST":
+        question = request.form.get("question", "").strip()
+        category = request.form.get("category", "").strip() or "General"
+        notes = request.form.get("notes", "").strip()[:1000]
+        resolves_at = request.form.get("resolves_at", "").strip() or None
 
-    if not question:
-        abort(404)
+        try:
+            probability = float(request.form.get("probability", "")) / 100
+        except ValueError:
+            probability = -1
 
-    try:
-        probability = float(request.form["probability"]) / 100
-    except (KeyError, ValueError):
-        probability = -1
+        if not question:
+            flash("Enter a question.", "error")
+            return render_template("new_forecast.html")
 
-    if not 0.01 <= probability <= 0.99:
-        flash("Enter a probability from 1% to 99%.", "error")
-        return redirect(url_for("forecast_page", market_id=market_id))
+        if not 0.01 <= probability <= 0.99:
+            flash("Enter a probability from 1% to 99%.", "error")
+            return render_template("new_forecast.html")
 
-    notes = request.form.get("rationale", "").strip()[:500]
-
-    try:
-        db().execute(
-            "INSERT INTO forecasts"
-            "(user_id, market_id, probability, rationale) "
-            "VALUES(?,?,?,?)",
+        cursor = db().execute(
+            """
+            INSERT INTO forecasts
             (
-                g.user["id"],
-                market_id,
+                user_id,
+                question,
                 probability,
                 notes,
+                category,
+                resolves_at
+            )
+            VALUES(?,?,?,?,?,?)
+            """,
+            (
+                g.user["id"],
+                question,
+                probability,
+                notes,
+                category,
+                resolves_at,
             ),
         )
+
         db().commit()
 
-    except sqlite3.IntegrityError:
-        flash("You already predicted this question.", "error")
+        return redirect(
+            url_for(
+                "forecast_page",
+                forecast_id=cursor.lastrowid,
+            )
+        )
 
-    return redirect(url_for("forecast_page", market_id=market_id))
+    return render_template("new_forecast.html")
+
+
+@app.route("/forecast/<int:forecast_id>")
+@login_required
+def forecast_page(forecast_id):
+    forecast = db().execute(
+        """
+        SELECT *
+        FROM forecasts
+        WHERE id=? AND user_id=?
+        """,
+        (
+            forecast_id,
+            g.user["id"],
+        ),
+    ).fetchone()
+
+    if not forecast:
+        abort(404)
+
+    return render_template(
+        "forecast.html",
+        forecast=forecast,
+    )
+
+
+@app.post("/forecast/<int:forecast_id>/resolve")
+@login_required
+def resolve_forecast(forecast_id):
+    outcome = request.form.get("outcome")
+
+    if outcome not in ("0", "1"):
+        abort(400)
+
+    forecast = db().execute(
+        """
+        SELECT *
+        FROM forecasts
+        WHERE id=?
+        AND user_id=?
+        AND status='open'
+        """,
+        (
+            forecast_id,
+            g.user["id"],
+        ),
+    ).fetchone()
+
+    if not forecast:
+        abort(404)
+
+    db().execute(
+        """
+        UPDATE forecasts
+        SET status='resolved',
+            outcome=?
+        WHERE id=?
+        """,
+        (
+            int(outcome),
+            forecast_id,
+        ),
+    )
+
+    db().commit()
+
+    return redirect(
+        url_for(
+            "forecast_page",
+            forecast_id=forecast_id,
+        )
+    )
 
 
 # MARKETS
@@ -240,8 +299,12 @@ def lmsr_cost(q_yes, q_no, liquidity):
 
 
 def market_probability(market):
-    yes = math.exp(market["q_yes"] / market["liquidity"])
-    no = math.exp(market["q_no"] / market["liquidity"])
+    yes = math.exp(
+        market["q_yes"] / market["liquidity"]
+    )
+    no = math.exp(
+        market["q_no"] / market["liquidity"]
+    )
 
     return yes / (yes + no)
 
@@ -312,7 +375,10 @@ def market(market_id):
         WHERE user_id=? AND market_id=?
         GROUP BY side
         """,
-        (g.user["id"], market_id),
+        (
+            g.user["id"],
+            market_id,
+        ),
     ).fetchall()
 
     return render_template(
@@ -329,8 +395,11 @@ def trade(market_id):
     connection = db()
 
     market_row = connection.execute(
-        "SELECT * FROM markets "
-        "WHERE id=? AND status='open'",
+        """
+        SELECT *
+        FROM markets
+        WHERE id=? AND status='open'
+        """,
         (market_id,),
     ).fetchone()
 
@@ -340,13 +409,23 @@ def trade(market_id):
     side = request.form.get("side")
 
     try:
-        shares = float(request.form.get("shares", 0))
+        shares = float(
+            request.form.get("shares", 0)
+        )
     except ValueError:
         shares = 0
 
     if side not in ("YES", "NO") or not 0.1 <= shares <= 100:
-        flash("Choose YES or NO and enter 0.1–100 shares.", "error")
-        return redirect(url_for("market", market_id=market_id))
+        flash(
+            "Choose YES or NO and enter 0.1–100 shares.",
+            "error",
+        )
+        return redirect(
+            url_for(
+                "market",
+                market_id=market_id,
+            )
+        )
 
     cost = quote_trade(
         market_row,
@@ -360,25 +439,57 @@ def trade(market_id):
     ).fetchone()
 
     if cost > user["balance"]:
-        flash("Not enough play credits.", "error")
-        return redirect(url_for("market", market_id=market_id))
+        flash(
+            "Not enough play credits.",
+            "error",
+        )
+        return redirect(
+            url_for(
+                "market",
+                market_id=market_id,
+            )
+        )
 
-    column = "q_yes" if side == "YES" else "q_no"
-
-    connection.execute(
-        f"UPDATE markets SET {column}={column}+? WHERE id=?",
-        (shares, market_id),
+    column = (
+        "q_yes"
+        if side == "YES"
+        else "q_no"
     )
 
     connection.execute(
-        "UPDATE users SET balance=balance-? WHERE id=?",
-        (cost, g.user["id"]),
+        f"""
+        UPDATE markets
+        SET {column}={column}+?
+        WHERE id=?
+        """,
+        (
+            shares,
+            market_id,
+        ),
+    )
+
+    connection.execute(
+        """
+        UPDATE users
+        SET balance=balance-?
+        WHERE id=?
+        """,
+        (
+            cost,
+            g.user["id"],
+        ),
     )
 
     connection.execute(
         """
         INSERT INTO trades
-        (user_id, market_id, side, shares, cost)
+        (
+            user_id,
+            market_id,
+            side,
+            shares,
+            cost
+        )
         VALUES(?,?,?,?,?)
         """,
         (
@@ -397,7 +508,12 @@ def trade(market_id):
         "success",
     )
 
-    return redirect(url_for("market", market_id=market_id))
+    return redirect(
+        url_for(
+            "market",
+            market_id=market_id,
+        )
+    )
 
 
 # RESULTS
@@ -408,13 +524,12 @@ def profile():
     forecasts = db().execute(
         """
         SELECT
-            m.category,
-            f.probability,
-            m.outcome
-        FROM forecasts f
-        JOIN markets m ON m.id=f.market_id
-        WHERE f.user_id=?
-        AND m.status='resolved'
+            category,
+            probability,
+            outcome
+        FROM forecasts
+        WHERE user_id=?
+        AND status='resolved'
         """,
         (g.user["id"],),
     ).fetchall()
@@ -424,7 +539,10 @@ def profile():
     for row in forecasts:
         data = categories.setdefault(
             row["category"],
-            {"count": 0, "brier": 0},
+            {
+                "count": 0,
+                "brier": 0,
+            },
         )
 
         data["count"] += 1
@@ -439,7 +557,10 @@ def profile():
 
     if forecasts:
         overall = sum(
-            (row["probability"] - row["outcome"]) ** 2
+            (
+                row["probability"]
+                - row["outcome"]
+            ) ** 2
             for row in forecasts
         ) / len(forecasts)
 
@@ -451,23 +572,29 @@ def profile():
     )
 
 
-# ADMIN
+# ADMIN — MARKET RESOLUTION
 
 @app.route("/admin", methods=["GET", "POST"])
 def admin():
     if request.method == "POST" and "key" in request.form:
         session["admin"] = (
             request.form["key"]
-            == os.getenv("ADMIN_KEY", "local-admin")
+            == os.getenv(
+                "ADMIN_KEY",
+                "local-admin",
+            )
         )
 
     market_rows = []
 
     if session.get("admin"):
         market_rows = db().execute(
-            "SELECT * FROM markets "
-            "WHERE status='open' "
-            "ORDER BY closes_at"
+            """
+            SELECT *
+            FROM markets
+            WHERE status='open'
+            ORDER BY closes_at
+            """
         ).fetchall()
 
     return render_template(
@@ -477,7 +604,7 @@ def admin():
 
 
 @app.post("/admin/resolve/<int:market_id>")
-def resolve(market_id):
+def resolve_market(market_id):
     if not session.get("admin"):
         abort(403)
 
@@ -489,15 +616,22 @@ def resolve(market_id):
     connection = db()
 
     market_row = connection.execute(
-        "SELECT * FROM markets "
-        "WHERE id=? AND status='open'",
+        """
+        SELECT *
+        FROM markets
+        WHERE id=? AND status='open'
+        """,
         (market_id,),
     ).fetchone()
 
     if not market_row:
         abort(404)
 
-    winning_side = "YES" if outcome == "1" else "NO"
+    winning_side = (
+        "YES"
+        if outcome == "1"
+        else "NO"
+    )
 
     payouts = connection.execute(
         """
@@ -508,14 +642,19 @@ def resolve(market_id):
         WHERE market_id=? AND side=?
         GROUP BY user_id
         """,
-        (market_id, winning_side),
+        (
+            market_id,
+            winning_side,
+        ),
     ).fetchall()
 
     for payout in payouts:
         connection.execute(
-            "UPDATE users "
-            "SET balance=balance+? "
-            "WHERE id=?",
+            """
+            UPDATE users
+            SET balance=balance+?
+            WHERE id=?
+            """,
             (
                 payout["payout"],
                 payout["user_id"],
@@ -523,9 +662,12 @@ def resolve(market_id):
         )
 
     connection.execute(
-        "UPDATE markets "
-        "SET status='resolved', outcome=? "
-        "WHERE id=?",
+        """
+        UPDATE markets
+        SET status='resolved',
+            outcome=?
+        WHERE id=?
+        """,
         (
             int(outcome),
             market_id,
@@ -534,9 +676,14 @@ def resolve(market_id):
 
     connection.commit()
 
-    flash("Question resolved.", "success")
+    flash(
+        "Market resolved.",
+        "success",
+    )
 
-    return redirect(url_for("admin"))
+    return redirect(
+        url_for("admin")
+    )
 
 
 # TEMPLATE HELPERS
